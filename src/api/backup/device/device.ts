@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { changeAccessToken, createDevice } from "../../logic/device"
+import { changeAccessToken, createDevice } from "../../../logic/device"
 import { validate as validateUUID } from "uuid"
 const router = Router()
 

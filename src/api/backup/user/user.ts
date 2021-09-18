@@ -1,11 +1,11 @@
 import { Router } from "express"
-import { logger } from "../../logger"
-import { isAuthorized } from "../../logic/auth"
-import { createDevice } from "../../logic/device"
-import { changeEmail } from "../../logic/email"
-import { changePassword } from "../../logic/password"
-import { deleteUser, EmailAlreadyInUse, isRegistrationData, registerUser, UserAlreadyExists } from "../../logic/user"
-import { validateDeviceName, validateEmail, validatePassword, validateUsername } from "../../util"
+import { logger } from "../../../logger"
+import { isAuthorized } from "../../../logic/auth"
+import { createDevice } from "../../../logic/device"
+import { changeEmail } from "../../../logic/email"
+import { changePassword } from "../../../logic/password"
+import { deleteUser, EmailAlreadyInUse, isRegistrationData, registerUser, UserAlreadyExists } from "../../../logic/user"
+import { validateDeviceName, validateEmail, validatePassword, validateUsername } from "../../../util"
 
 const router = Router()
 
