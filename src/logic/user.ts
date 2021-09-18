@@ -88,6 +88,7 @@ export async function registerUser(data: IRegistrationData): Promise<void> {
     
     try {
         await getRepository(User).insert(user)
+        logger.info(`Successfully registered user "${data.username}"`)
     } catch(err: any){
         if(err instanceof QueryFailedError) {
             const constraint = err.driverError.constraint
