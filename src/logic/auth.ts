@@ -9,8 +9,12 @@ declare module 'express-session' {
 }
 
 export function isAuthorized(username: string, req: express.Request, res: express.Response): boolean {
+    if(!username) {
+        res.status(401).json({ message: "401 Unauthorized" })
+        return false
+    }
     if(username === req.session.username) return true
-    res.status(400).json({ message: "Unauthorized request" })
+    res.status(403).json({ message: "403 Forbidden" })
     return false;
 }
 
