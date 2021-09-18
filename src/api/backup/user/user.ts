@@ -1,49 +1,63 @@
-import { Router } from "express"
+import { Router, Response } from "express"
 import { logger } from "../../../logger"
 import { isAuthorized } from "../../../logic/auth"
 import { createDevice } from "../../../logic/device"
 import { changeEmail } from "../../../logic/email"
 import { changePassword } from "../../../logic/password"
-import { deleteUser, EmailAlreadyInUse, isRegistrationData, registerUser, UserAlreadyExists } from "../../../logic/user"
+import { BadRegistrationData, deleteUser, EmailAlreadyInUse, isRegistrationData, registerUser, UserAlreadyExists } from "../../../logic/user"
 import { validateDeviceName, validateEmail, validatePassword, validateUsername } from "../../../util"
 
 const router = Router()
 
-router.post("/", (req, res) => {
+router.post("/", async (req, res) => {
     const data = req.body
     if(!isRegistrationData(data)) {
-        res.status(400).json({ message: "Bad Request"})
+        resBadData()
         return
     }
-    registerUser(data)
-        .then(success => {
-            if(!success) {
-                res.status(500).json({ message: `Can't register user "${data.username}": Internal error` })
-                return
-            }
-            logger.info(`Registered user ${data.username}`)
-            res.status(200).json({ message: "Successfully registered user" }) 
+    try {
+        await registerUser(data)
+        resSuccess(data.username)
+    } catch(err) {
+        if(err instanceof UserAlreadyExists) resUserConflict(err)
+        else if(err instanceof EmailAlreadyInUse) resEmailConflict(data.username, err)
+        else if(err instanceof BadRegistrationData) resBadData()
+        else resInternalError(data.username)
+    }
+    //respond on success
+    function resSuccess(username: string):void  {
+        res.send(200).json({ message: `Successfully registered user "${username}"`})
+    }
+    //respond based on error thrown by registerUser()
+    function resUserConflict(err: UserAlreadyExists): void {
+        res.status(409).json({
+            error: "UserAlreadyExist",
+            message: `Can't register user "${err.username}": Username already in use`,
+            username: err.username
         })
-        .catch((err: any) => {
-            if(err instanceof UserAlreadyExists) {
-                res.status(400).json({ 
-                    error: "UserAlreadyExists",
-                    message: err.message,
-                    username: err.username
-                })
-            } else if(err instanceof EmailAlreadyInUse) {
-                res.status(400).json({
-                    error: "EmailAlreadyInUse",
-                    message: err.message,
-                    username: err.username,
-                    email: err.email
-                })
-            } else {
-                res.status(500).json({ message: `Can't register user "${data.username}": Internal error` })
-                logger.error(JSON.stringify(err))    
-            }
+    }
+
+    function resEmailConflict(username: string, err: EmailAlreadyInUse): void {
+        res.status(409).json({
+            error: "EmailAlreadyInUse",
+            message: `Can't register user "${username}": Email "${err.email}" already in use`,
+            usename: username,
+            email: err.email
         })
-    
+    }
+
+    function resBadData(): void {
+        logger.warn(`Connection "${req.ip}" sent bad RegistrationData`)
+        res.status(400).json({ message: "Bad Request"})
+    }
+
+    function resInternalError(username: string): void {
+        res.status(500).json({
+            error: "InternalError",
+            message: `Can't register user "${username}": Internal error`,
+            username: username
+        })
+    }
 })
 
 router.post("/:username/device", async (req, res) => {

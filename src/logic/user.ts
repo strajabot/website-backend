@@ -16,26 +16,43 @@ export class UserAlreadyExists extends Error {
     public readonly username: string
     
     constructor(username: string) {
-        super(`Can't register user "${username}": Username already in use`)
-        this.username = username
+        super(`User "${username}" already exists`)        
+        Object.setPrototypeOf(this, new.target.prototype);
 
-        Object.setPrototypeOf(this, UserAlreadyExists.prototype);
+        this.username = username
+    }
+}
+
+export class UserNotExist extends Error {
+    
+    public readonly username: string
+
+    constructor(username: string) {
+        super(`User "${username}" doesn't exist`)
+        Object.setPrototypeOf(this, new.target.prototype)
+
+        this.username = username
     }
 }
 
 export class EmailAlreadyInUse extends Error {
 
-    public readonly username: string
     public readonly email: string
     
-    constructor(username: string, email: string) {
-        super(`Can't register user "${username}": Email "${email}" already in use`)
-        this.username = username
-        this.email = email
+    constructor(email: string) {
+        super(`Email "${email}" is already in use`)
+        Object.setPrototypeOf(this, new.target.prototype)
 
-        Object.setPrototypeOf(this, EmailAlreadyInUse.prototype);
+        this.email = email
     }
 
+}
+
+export class BadRegistrationData extends Error {
+    constructor() {
+        super("Registration data is malformed")
+        Object.setPrototypeOf(this, new.target.prototype)
+    }
 }
 
 export function isRegistrationData(rawData: object): rawData is IRegistrationData {
@@ -49,12 +66,11 @@ export function isRegistrationData(rawData: object): rawData is IRegistrationDat
 }
 
 //todo: find a way to avoid the findOne() call 
-export async function registerUser(data: IRegistrationData): Promise<boolean> {
+export async function registerUser(data: IRegistrationData): Promise<void> {
     if(!validateUsername(data.username)
             || !validateEmail(data.email)
             || !validatePassword(data.password)) {
-        logger.warn(`Server received bad RegistrationData, may be a bug or exploit attempt: \n${JSON.stringify(data)}`)
-        return false
+        throw new BadRegistrationData()
     }
     
     //we can't parse the duplicate primary key error in the insert()  
@@ -72,14 +88,13 @@ export async function registerUser(data: IRegistrationData): Promise<boolean> {
     
     try {
         await getRepository(User).insert(user)
-        return true
     } catch(err: any){
         if(err instanceof QueryFailedError) {
             const constraint = err.driverError.constraint
-            if(constraint === UserConstraint.uniqueEmail) throw new EmailAlreadyInUse(data.username, data.email)
+            if(constraint === UserConstraint.uniqueEmail) throw new EmailAlreadyInUse(data.email)
         }
-        logger.error(`Can't register user "${data.username}": \n${JSON.stringify(err)} `)
-        return false
+        logger.error(`Can't register user "${data.username}": \n${JSON.stringify(err)}`)
+        throw err
     }
 }
 
