@@ -3,10 +3,11 @@ import { v4 as uuid } from "uuid"
 import { Device } from "../database/entity/device"
 import { User } from "../database/entity/user"
 import { safeCompare } from "../util"
+import { UserNotExist } from "./user"
 
-export async function createDevice(username: string, deviceName: string): Promise<Device|null> {
+export async function createDevice(username: string, deviceName: string): Promise<Device> {
     const user = await getRepository(User).findOne(username)
-    if(!user) return null
+    if(!user) throw new UserNotExist(username)
     
     const device = new Device()
     device.identifier = uuid()
