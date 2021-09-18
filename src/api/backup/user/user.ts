@@ -3,7 +3,7 @@ import { IDevice } from "../../../database/entity/device"
 import { logger } from "../../../logger"
 import { isAuthorized } from "../../../logic/auth"
 import { createDevice } from "../../../logic/device"
-import { changeEmail } from "../../../logic/email"
+import { changeEmail, confirmEmail } from "../../../logic/email"
 import { changePassword } from "../../../logic/password"
 import { BadRegistrationData, deleteUser, EmailAlreadyInUse, isRegistrationData, registerUser, UserAlreadyExists, UserNotExist } from "../../../logic/user"
 import { validateDeviceName, validateEmail, validatePassword, validateUsername } from "../../../util"
@@ -145,22 +145,75 @@ router.post("/:username/change_password", async (req, res) => {
 
 })
 
-router.post("/:username/change_email", async (req, res) => {
+router.post("/:username/email/change", async (req, res) => {
     const username = req.params.username
     const email = req.body.email
-    if(!validateUsername(username) || !validateEmail(email)) {
-        res.status(400).json({ message: "Bad request." })
-        return
-    }
+    if(!validateUsername(username) || !validateEmail(email)) return resBadData()
     if(!isAuthorized(username, req, res)) return
-    const success = await changeEmail(username, email)
-    if(!success) {
-        res.status(400).json({ message: "Couldn't change email of user" })
-        return
+    
+    try {
+        await changeEmail(username, email)
+        resSuccess(username, email)
+    } catch(err) {
+        if(err instanceof UserNotExist) resUserNotExist(username, email)
+        else resInternalError(username, email)
     }
-    logger.info(`User "${username}" changed email address`)
-    res.status(200).json({ message: "Successfully changed email of user" })    
+
+    function resSuccess(username: string, email: string): void {
+        res.status(200).json({ message: `Successfully changed email of user "${username}" to "${email}"` })
+    }
+
+    function resUserNotExist(username: string, email: string): void {
+        res.status(404).json({ message: `Couldn't change email of user "${username}" to "${email}": User "${username}" doesn't exist` })    
+    }
+    
+    function resBadData(): void {
+        res.status(400).json({ message: "Couldn't change email: Bad Request" })
+    }
+
+    function resInternalError(username: string, email: string): void {
+        res.status(500).json({ message: `Couldn't change email of user "${username}" to "${email}": Internal error"` })
+    }
+
 })
+
+router.post("/:username/email/confirm", async (req, res) => {
+    const username = req.params.username
+    const code = req.body.confirmCode
+    //todo: add confirm code validation
+    if(!validateUsername(username)) return resBadData()
+    if(!isAuthorized(username, req, res)) return
+    try {
+        const success = await confirmEmail(username, code)
+        if(success) resSuccess(username)
+        else resBadConfirmCode(username)
+    } catch(err) {
+        if(err instanceof UserNotExist) resUserNotExist(username)
+        else resInternalError(username)
+    }
+
+    function resSuccess(username: string): void {
+        res.status(200).json({ message: `Successfully confirmed email of user "${username}"` })
+    }
+
+    function resUserNotExist(username: string): void {
+        res.status(404).json({ message: `Couldn't confrm email of user "${username}": User "${username}" doesn't exist` })    
+    }
+    
+    function resBadConfirmCode(username: string): void {
+        res.status(401).json({ message: `Couldn't confirm email of user "${username}": Wrong confirmation code`})
+    }
+
+    function resBadData(): void {
+        res.status(400).json({ message: "Couldn't confirm email: Bad Request" })
+    }
+
+    function resInternalError(username: string): void {
+        res.status(500).json({ message: `Couldn't confirm email of user "${username}": Internal error"` })
+    }
+
+})
+
 
 
 router.delete("/:username", async (req, res) => {
