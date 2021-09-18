@@ -33,7 +33,7 @@ router.post("/", (req, res) => {
                 })
             } else if(err instanceof EmailAlreadyInUse) {
                 res.status(400).json({
-                    error: "EmailAlreafyInUse",
+                    error: "EmailAlreadyInUse",
                     message: err.message,
                     username: err.username,
                     email: err.email
