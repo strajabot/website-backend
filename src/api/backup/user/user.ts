@@ -112,18 +112,36 @@ router.post("/:username/device", async (req, res) => {
 router.post("/:username/change_password", async (req, res) => {
     const username = req.params.username
     const password = req.body.password
-    if(!validateUsername(username) || !validatePassword(password)) {
-        res.status(400).json({ message: "Bad request." })
-        return
-    }
+    if(!validateUsername(username) || !validatePassword(password)) return resBadData()
     if(!isAuthorized(username, req, res)) return
-    const success = await changePassword(username, password)
-    if(!success) {
-        res.status(400).json({ message: "Couldn't change password of user" })
-        return
+    try {
+        await changePassword(username, password)
+        resSuccess(username)
+    } catch(err) {
+        if(err instanceof UserNotExist) resUserNotExist(username)
+        else resInternalError(username)
     }
-    logger.info(`User "${username}" changed password`)
-    res.status(200).json({ message: "Successfully changed password of user" }) 
+    //responses
+    function resSuccess(username: string): void {
+        res.status(200).json({ message: `Successfully changed password of user "${username}"` }) 
+    }
+    
+    function resUserNotExist(username: string): void {
+        res.status(404).json({ message: `Couldn't change password of user "${username}": User "${username}" doesn't exist`})
+    }
+
+    function resBadData(): void {
+        res.status(400).json({ message: "Bad Request" })
+    }
+
+    function resInternalError(username: string): void {
+        res.status(500).json({
+            error: "InternalError",
+            message: `Couldn't change password of user "${username}": Internal error`,
+            username: username
+        })
+    }
+
 })
 
 router.post("/:username/change_email", async (req, res) => {
