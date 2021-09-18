@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, Column, OneToMany } from "typeorm"
+import { Entity, PrimaryColumn, Column, OneToMany, Unique } from "typeorm"
 import { Device } from "./device"
 
 export interface IUser {
@@ -10,14 +10,20 @@ export interface IUser {
     devices?: Promise<Device[]>
 }
 
+export enum UserConstraint {
+    //uniqueUsername = "pk_user_username", -> unused - look at registerUser()
+    uniqueEmail = "unique_user_email_constraint"
+}
+
 @Entity()
+@Unique("unique_user_email_constraint", ["email"])
 export class User implements IUser {
-    
+
     @PrimaryColumn({
         type: "varchar",
         nullable: false,
-        unique: true,
         length: 31,
+        unique: true
     })
     username: string
 
@@ -28,7 +34,6 @@ export class User implements IUser {
 
     @Column({
         nullable: false,
-        unique: true
     })
     email: string
     

@@ -1,13 +1,41 @@
 import { genEmailConfirmCode} from "./email"
 import { validateEmail, validatePassword , validateUsername } from "../util";
-import { User } from "../database/entity/user"
+import { User, UserConstraint } from "../database/entity/user"
 import { checkPassword, hashPassword } from "./password";
-import { getRepository } from "typeorm";
+import { getRepository, QueryFailedError } from "typeorm";
+import { logger } from "../logger";
 
 export interface IRegistrationData {
     username: string
     password: string
     email: string
+}
+
+export class UserAlreadyExists extends Error {
+    
+    public readonly username: string
+    
+    constructor(username: string) {
+        super(`Can't register user "${username}": Username already in use`)
+        this.username = username
+
+        Object.setPrototypeOf(this, UserAlreadyExists.prototype);
+    }
+}
+
+export class EmailAlreadyInUse extends Error {
+
+    public readonly username: string
+    public readonly email: string
+    
+    constructor(username: string, email: string) {
+        super(`Can't register user "${username}": Email "${email}" already in use`)
+        this.username = username
+        this.email = email
+
+        Object.setPrototypeOf(this, EmailAlreadyInUse.prototype);
+    }
+
 }
 
 export function isRegistrationData(rawData: object): rawData is IRegistrationData {
@@ -20,23 +48,37 @@ export function isRegistrationData(rawData: object): rawData is IRegistrationDat
     return true;
 }
 
+//todo: find a way to avoid the findOne() call 
 export async function registerUser(data: IRegistrationData): Promise<boolean> {
-    if(!validateUsername(data.username)) throw "Bad Username Format"
-    if(!validateEmail(data.email)) throw "Bad email format"
-    if(!validatePassword(data.password)) throw "Bad password format"
+    if(!validateUsername(data.username)
+            || !validateEmail(data.email)
+            || !validatePassword(data.password)) {
+        logger.warn(`Server received bad RegistrationData, may be a bug or exploit attempt: \n${JSON.stringify(data)}`)
+        return false
+    }
+    
+    //we can't parse the duplicate primary key error in the insert()  
+    //because we don't know what the primary key constraint is and
+    //there seems to be no way to set it in TypeORM. :( 
+    const dbUser = await getRepository(User).findOne(data.username)
+    if(dbUser) throw new UserAlreadyExists(data.username)
+
     const user: User = new User()
     user.username = data.username;
     user.email = data.email
     user.emailConfirmCode = genEmailConfirmCode()
     user.emailIsConfirmed = false
     user.hash = await hashPassword(data.password)
+    
     try {
-        //insert will fail if the user already exists resulting in an error
-        //that triggers the catch clause?
         await getRepository(User).insert(user)
         return true
-    } catch(e) {
-        console.log(e)
+    } catch(err: any){
+        if(err instanceof QueryFailedError) {
+            const constraint = err.driverError.constraint
+            if(constraint === UserConstraint.uniqueEmail) throw new EmailAlreadyInUse(data.username, data.email)
+        }
+        logger.error(`Can't register user "${data.username}": \n${JSON.stringify(err)} `)
         return false
     }
 }

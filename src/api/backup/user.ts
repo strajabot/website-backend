@@ -4,24 +4,46 @@ import { isAuthorized } from "../../logic/auth"
 import { createDevice } from "../../logic/device"
 import { changeEmail } from "../../logic/email"
 import { changePassword } from "../../logic/password"
-import { deleteUser, isRegistrationData, registerUser } from "../../logic/user"
+import { deleteUser, EmailAlreadyInUse, isRegistrationData, registerUser, UserAlreadyExists } from "../../logic/user"
 import { validateDeviceName, validateEmail, validatePassword, validateUsername } from "../../util"
 
 const router = Router()
 
-router.post("/", async (req, res) => {
+router.post("/", (req, res) => {
     const data = req.body
     if(!isRegistrationData(data)) {
-        res.status(400).json({ message: "400 Bad Request"})
+        res.status(400).json({ message: "Bad Request"})
         return
     }
-    const success = await registerUser(data)
-    if(!success) {
-        res.status(400).json({ message: "Couldn't register user" })
-        return
-    }
-    logger.info(`Registered user ${data.username}`)
-    res.status(200).json({ message: "Successfully registered user" }) 
+    registerUser(data)
+        .then(success => {
+            if(!success) {
+                res.status(500).json({ message: `Can't register user "${data.username}": Internal error` })
+                return
+            }
+            logger.info(`Registered user ${data.username}`)
+            res.status(200).json({ message: "Successfully registered user" }) 
+        })
+        .catch((err: any) => {
+            if(err instanceof UserAlreadyExists) {
+                res.status(400).json({ 
+                    error: "UserAlreadyExists",
+                    message: err.message,
+                    username: err.username
+                })
+            } else if(err instanceof EmailAlreadyInUse) {
+                res.status(400).json({
+                    error: "EmailAlreafyInUse",
+                    message: err.message,
+                    username: err.username,
+                    email: err.email
+                })
+            } else {
+                res.status(500).json({ message: `Can't register user "${data.username}": Internal error` })
+                logger.error(JSON.stringify(err))    
+            }
+        })
+    
 })
 
 router.post("/:username/device", async (req, res) => {
