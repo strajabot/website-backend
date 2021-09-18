@@ -103,7 +103,8 @@ router.post("/:username/device", async (req, res) => {
         res.status(500).json({
             error: "InternalError",
             message: `Can't add "${deviceName}" for user "${username}": Internal error`,
-            username: username
+            username: username,
+            deviceName: deviceName
         })
     }
 
