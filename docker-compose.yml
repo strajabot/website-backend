@@ -28,6 +28,7 @@ services:
     ports: 
       - "8080:80"
       - "2222:22"
+      - "9229:9229"
     restart: unless-stopped
     environment: 
       - SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY}
@@ -42,5 +43,9 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     networks:
       - internal
+    command: 
+      - node
+      - "--inspect=0.0.0.0:9229"
+      - "."
 networks: 
   internal:

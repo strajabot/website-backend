@@ -7,13 +7,20 @@ import { safeCompare } from "../util";
 
 /**
  * Generates an 8 character code that is used to verify the user's 
- * email address   
+ * email address.
  * @returns confirmation code
  */
  export function genEmailConfirmCode(): string {
     return uuid().slice(0, 8)
 }
 
+
+/**
+ * Changes the email address of user.
+ * @param username The user
+ * @param email New email address
+ * @throws {UserNotExist} User doesn't exist in the database
+ */
 export async function changeEmail(username:string, email: string): Promise<void> {
     const user = await getRepository(User).findOne(username)
     if(!user) throw new UserNotExist(username)
@@ -24,6 +31,13 @@ export async function changeEmail(username:string, email: string): Promise<void>
     logger.info(`User "${username}" changed email address`)
 }
 
+/** 
+ * Used to confirm email address of a user.
+ * @param username The user 
+ * @param confirmCode Confirmation code 
+ * @returns true if code is correct
+ * @throws {UserNotExist} User doesn't exist in the database 
+ */
 export async function confirmEmail(username: string, confirmCode: string): Promise<boolean> {
     const user = await getRepository(User).findOne(username)
     if(!user) throw new UserNotExist(username)

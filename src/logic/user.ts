@@ -65,7 +65,13 @@ export function isRegistrationData(rawData: object): rawData is IRegistrationDat
     return true;
 }
 
-//todo: find a way to avoid the findOne() call 
+/**
+ * Registers a new user in the database
+ * @param data Data used to register the user
+ * @throws {BadRegistrationData} Provided data is malformeds
+ * @throws {UserAlreadyExist} User with the provided username already exists
+ * @throws {EmailAlreadyInUse} Provided email is already in use
+ */
 export async function registerUser(data: IRegistrationData): Promise<void> {
     if(!validateUsername(data.username)
             || !validateEmail(data.email)
@@ -76,6 +82,7 @@ export async function registerUser(data: IRegistrationData): Promise<void> {
     //we can't parse the duplicate primary key error in the insert()  
     //because we don't know what the primary key constraint is and
     //there seems to be no way to set it in TypeORM. :( 
+    //todo: find a way to avoid the findOne() call 
     const dbUser = await getRepository(User).findOne(data.username)
     if(dbUser) throw new UserAlreadyExists(data.username)
 
