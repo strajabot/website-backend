@@ -10,4 +10,4 @@ RUN \
  apk add postgresql-client
 COPY . .
 RUN tsc
-CMD ./wait-for-postgres.sh ; typeorm schema:sync ; node .
+CMD ./wait-for-postgres.sh ; typeorm schema:sync ; node --enable-source-maps --inspect=0.0.0.0:9229 .
