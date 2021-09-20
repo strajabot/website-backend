@@ -1,5 +1,5 @@
 import { Router, Response } from "express"
-import { IDevice } from "../../../database/entity/device"
+import { Device, IDevice } from "../../../database/entity/device"
 import { logger } from "../../../logger"
 import { isAuthorized } from "../../../logic/auth"
 import { createDevice } from "../../../logic/device"
@@ -18,16 +18,18 @@ router.post("/", async (req, res) => {
     }
     try {
         await registerUser(data)
-        resSuccess(data.username)
     } catch(err) {
         if(err instanceof UserAlreadyExists) resUserConflict(err)
         else if(err instanceof EmailAlreadyInUse) resEmailConflict(data.username, err)
         else if(err instanceof BadRegistrationData) resBadData()
         else resInternalError(data.username)
+        return
     }
+    resSuccess(data.username)
+    
     //respond on success
     function resSuccess(username: string):void  {
-        res.send(200).json({ message: `Successfully registered user "${username}"`})
+        res.status(200).json({ message: `Successfully registered user "${username}"`})
     }
     //respond based on error thrown by registerUser()
     function resUserConflict(err: UserAlreadyExists): void {
@@ -68,13 +70,15 @@ router.post("/:username/device", async (req, res) => {
     const deviceName = req.body.deviceName
     if(!validateUsername(username) || !validateDeviceName(deviceName)) return resBadData()
     if(!isAuthorized(username, req , res)) return
+    let device: Device
     try {
-        const device = await createDevice(username, deviceName)
-        resSuccess(username, device)
+        device = await createDevice(username, deviceName)
     } catch(err) {
         if(err instanceof UserNotExist) resUserNotExist(username, deviceName)
         else resInternalError(username, deviceName)
+        return
     }
+    resSuccess(username, device)
     
     function resSuccess(username: string, device: IDevice) {
         logger.info(`Added device "${device.deviceName}" for user "${username}"`)
@@ -117,11 +121,13 @@ router.post("/:username/change_password", async (req, res) => {
     if(!isAuthorized(username, req, res)) return
     try {
         await changePassword(username, password)
-        resSuccess(username)
     } catch(err) {
         if(err instanceof UserNotExist) resUserNotExist(username)
         else resInternalError(username)
+        return
     }
+    resSuccess(username)
+    
     //responses
     function resSuccess(username: string): void {
         res.status(200).json({ message: `Successfully changed password of user "${username}"` }) 
@@ -150,15 +156,15 @@ router.post("/:username/email/change", async (req, res) => {
     const email = req.body.email
     if(!validateUsername(username) || !validateEmail(email)) return resBadData()
     if(!isAuthorized(username, req, res)) return
-    
     try {
         await changeEmail(username, email)
-        resSuccess(username, email)
     } catch(err) {
         if(err instanceof UserNotExist) resUserNotExist(username, email)
         else resInternalError(username, email)
+        return
     }
-
+    resSuccess(username, email)
+    
     function resSuccess(username: string, email: string): void {
         res.status(200).json({ message: `Successfully changed email of user "${username}" to "${email}"` })
     }
@@ -183,14 +189,16 @@ router.post("/:username/email/confirm", async (req, res) => {
     //todo: add confirm code validation
     if(!validateUsername(username)) return resBadData()
     if(!isAuthorized(username, req, res)) return
+    let success: boolean
     try {
-        const success = await confirmEmail(username, code)
-        if(success) resSuccess(username)
-        else resBadConfirmCode(username)
+        success = await confirmEmail(username, code)
     } catch(err) {
         if(err instanceof UserNotExist) resUserNotExist(username)
         else resInternalError(username)
+        return
     }
+    if(success) resSuccess(username)
+    else resBadConfirmCode(username)
 
     function resSuccess(username: string): void {
         res.status(200).json({ message: `Successfully confirmed email of user "${username}"` })
