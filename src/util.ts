@@ -39,7 +39,7 @@ export function validateDeviceName(username: string): boolean {
  * @returns true if password valid
  */
 export function validatePassword(password: string): boolean {
-    return new RegExp(/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[*.!@\$%\^&(){}\[\]:;<>,.?/~_+-=|\\]).{8,32}$/)
+    return new RegExp(/^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[*.!@\$%\^&(){}\[\]:;<>,.?/~_+\-=|\\]).{8,32}$/)
         .test(password)
 }
 
