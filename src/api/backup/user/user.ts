@@ -252,7 +252,11 @@ router.post("/:username/email/confirm", async (req, res) => {
     }
 
     function resInternalError(username: string): void {
-        res.status(500).json({ message: `Couldn't confirm email of user "${username}": Internal error"` })
+        res.status(500).json({ 
+            error: "InternalError",
+            message: `Couldn't confirm email of user "${username}": Internal error"`,
+            username: username
+        })
     }
 
 })
@@ -261,18 +265,44 @@ router.post("/:username/email/confirm", async (req, res) => {
 
 router.delete("/:username", async (req, res) => {
     const username = req.params.username
-    if(!validateUsername) {
-        res.status(400).json({ message: "Bad Request" })
-        return
-    }
+    if(!validateUsername(username)) return resBadData()
     if(!isAuthorized(username, req, res)) return
-    const success = await deleteUser(username)
-    if(!success) {
-        res.status(400).json({ message: "Couldn't delete user" })
+    try {
+        await deleteUser(username)
+    } catch(err) {
+        if(err instanceof UserNotExist) resUserNotExist(username)
+        else resInternalError(username)
         return
     }
-    logger.info(`Delted user "${username}"`)
-    res.status(200).json({ message: "Successfully deleted user" })    
+    resSuccess(username)
+    //responses
+    function resSuccess(username: string): void {
+        res.status(200).json({ message: `Successfully deleted user "${username}"`})
+    }
+
+    function resUserNotExist(username: string): void {
+        res.status(404).json({ 
+            error: "UserNotExist",
+            message: `Couldn't delete user "${username}": User "${username}" doesn't exist`,
+            username: username
+        })
+    }
+
+    function resBadData(): void {
+        res.status(400).json({
+            error: "BadRequest",
+            message: "Couldn't delete user: Bad request"
+        })
+    }
+
+    function resInternalError(username: string): void {
+        res.status(400).json({
+            error: "InternalError",
+            message: `Couldn't delete user "${username}": Internal error`,
+            username: username
+        })
+    }
+
 })
 
 export { router }

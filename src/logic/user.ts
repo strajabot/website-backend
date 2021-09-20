@@ -126,9 +126,9 @@ export async function loginUser(data: ILoginData): Promise<boolean> {
     return checkPassword(data.username, data.password)
 }
 
-export async function deleteUser(username: string): Promise<boolean> {
+export async function deleteUser(username: string): Promise<void> {
     const user = await getRepository(User).findOne(username) 
-    if(!user) return false
+    if(!user) throw new UserNotExist(username)
     getRepository(User).remove(user)
-    return true
+    logger.info(`Delted user "${username}"`)
 }
