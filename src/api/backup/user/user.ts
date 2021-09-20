@@ -26,12 +26,11 @@ router.post("/", async (req, res) => {
         return
     }
     resSuccess(data.username)
-    
-    //respond on success
+    //responses
     function resSuccess(username: string):void  {
         res.status(200).json({ message: `Successfully registered user "${username}"`})
     }
-    //respond based on error thrown by registerUser()
+    
     function resUserConflict(err: UserAlreadyExists): void {
         res.status(409).json({
             error: "UserAlreadyExist",
@@ -51,7 +50,10 @@ router.post("/", async (req, res) => {
 
     function resBadData(): void {
         logger.warn(`Connection "${req.ip}" sent bad RegistrationData`)
-        res.status(400).json({ message: "Bad Request"})
+        res.status(400).json({ 
+            error: "BadRequest",
+            message: "Couldn't register user: Bad Request"
+        })
     }
 
     function resInternalError(username: string): void {
@@ -79,7 +81,7 @@ router.post("/:username/device", async (req, res) => {
         return
     }
     resSuccess(username, device)
-    
+    //responses
     function resSuccess(username: string, device: IDevice) {
         logger.info(`Added device "${device.deviceName}" for user "${username}"`)
         res.status(200).json({
@@ -100,7 +102,10 @@ router.post("/:username/device", async (req, res) => {
     }
 
     function resBadData(): void {
-        res.status(400).json({ message: "Bad Request" })
+        res.status(400).json({ 
+            error: "BadRequest",
+            message: "Couldn't add device: Bad Request" 
+        })
     }
 
     function resInternalError(username: string, deviceName: string): void {
@@ -127,18 +132,24 @@ router.post("/:username/change_password", async (req, res) => {
         return
     }
     resSuccess(username)
-    
     //responses
     function resSuccess(username: string): void {
         res.status(200).json({ message: `Successfully changed password of user "${username}"` }) 
     }
     
     function resUserNotExist(username: string): void {
-        res.status(404).json({ message: `Couldn't change password of user "${username}": User "${username}" doesn't exist`})
+        res.status(404).json({ 
+            error: "UserNotExist",    
+            message: `Couldn't change password of user "${username}": User "${username}" doesn't exist`,
+            username: username
+        })
     }
 
     function resBadData(): void {
-        res.status(400).json({ message: "Bad Request" })
+        res.status(400).json({ 
+            error: "BadRequest",
+            message: "Couldn't change password: Bad Request" 
+        })
     }
 
     function resInternalError(username: string): void {
@@ -164,21 +175,34 @@ router.post("/:username/email/change", async (req, res) => {
         return
     }
     resSuccess(username, email)
-    
+    //responses
     function resSuccess(username: string, email: string): void {
         res.status(200).json({ message: `Successfully changed email of user "${username}" to "${email}"` })
     }
 
     function resUserNotExist(username: string, email: string): void {
-        res.status(404).json({ message: `Couldn't change email of user "${username}" to "${email}": User "${username}" doesn't exist` })    
+        res.status(404).json({ 
+            error: "UserNotExist",
+            message: `Couldn't change email of user "${username}" to "${email}": User "${username}" doesn't exist`,
+            username: username,
+            email: email
+        })    
     }
     
     function resBadData(): void {
-        res.status(400).json({ message: "Couldn't change email: Bad Request" })
+        res.status(400).json({ 
+            error: "BadRequest",
+            message: "Couldn't change email: Bad Request" 
+        })
     }
 
     function resInternalError(username: string, email: string): void {
-        res.status(500).json({ message: `Couldn't change email of user "${username}" to "${email}": Internal error"` })
+        res.status(500).json({
+            error: "InternalError",
+            message: `Couldn't change email of user "${username}" to "${email}": Internal error"`,
+            username: username,
+            email: email
+        })
     }
 
 })
@@ -199,21 +223,32 @@ router.post("/:username/email/confirm", async (req, res) => {
     }
     if(success) resSuccess(username)
     else resBadConfirmCode(username)
-
+    //responses
     function resSuccess(username: string): void {
         res.status(200).json({ message: `Successfully confirmed email of user "${username}"` })
     }
 
     function resUserNotExist(username: string): void {
-        res.status(404).json({ message: `Couldn't confrm email of user "${username}": User "${username}" doesn't exist` })    
+        res.status(404).json({
+            error: "UserNotExist", 
+            message: `Couldn't confrm email of user "${username}": User "${username}" doesn't exist`,
+            username: username
+        })    
     }
     
     function resBadConfirmCode(username: string): void {
-        res.status(401).json({ message: `Couldn't confirm email of user "${username}": Wrong confirmation code`})
+        res.status(400).json({
+            error: "BadConfirmCode", 
+            message: `Couldn't confirm email of user "${username}": Wrong confirmation code`,
+            username: username
+        })
     }
 
     function resBadData(): void {
-        res.status(400).json({ message: "Couldn't confirm email: Bad Request" })
+        res.status(400).json({ 
+            error: "BadRequest",
+            message: "Couldn't confirm email: Bad Request" 
+        })
     }
 
     function resInternalError(username: string): void {
