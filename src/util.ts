@@ -55,11 +55,11 @@ export function validatePassword(password: string): boolean {
 export function safeCompare(input: string, allowed: string): boolean {
     let inputBuffer = Buffer.from(input)
     const allowedBuffer = Buffer.from(allowed)
-    const lengthCompare = (inputBuffer.length == allowedBuffer.length)
-    if(lengthCompare) {
+    const lengthSame = (inputBuffer.length == allowedBuffer.length)
+    if(!lengthSame) {
         inputBuffer = allowedBuffer
     }
-    return !lengthCompare && crypto.timingSafeEqual(inputBuffer, allowedBuffer)
+    return crypto.timingSafeEqual(inputBuffer, allowedBuffer) && lengthSame
 }
 
 /**
