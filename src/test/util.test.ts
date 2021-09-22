@@ -80,3 +80,20 @@ describe("Timing attack safe string comparasion", () => {
     })
 })
 
+describe("Safe path joining", () => {
+    test("Should return the joined path if tehre are no exploits detected", () => {
+        expect(safePathJoin("/usr/data/", "user1/mydata/")).toBe("/usr/data/user1/mydata/")
+    })
+
+    test("Should return null if null bytes are inside the string", () => {
+        expect(safePathJoin("/usr/data/", "user1/\0mydata/")).toBe(null)
+    })
+
+    test("Should return null if dissallowed characters are included", () => {
+        expect(safePathJoin("/usr/data/", "user1$/mydata/")).toBe(null)
+    })
+
+    test("Should return null if directory traversal is attempted", () => {
+        expect(safePathJoin("/usr/data/", "../pwd/pwd.txt")).toBe(null)
+    })
+})
