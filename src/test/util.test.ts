@@ -36,6 +36,31 @@ describe("Username validator", () => {
     })
 })
 
+
+describe("Device name validator", () => {
+    test("Should return true for valid device name", () => {
+        expect(validateDeviceName("phone")).toBe(true)
+        expect(validateDeviceName("PHONE")).toBe(true)
+        expect(validateDeviceName("Phone 1")).toBe(true)
+    })
+
+    test("Should return false is device name shorter than 3 chars", () => {
+        expect(validateDeviceName("ab")).toBe(false)
+    })
+
+    test("Should return fale if device name longer than 15 chars", () => {
+        expect(validateDeviceName("0123456789abcdef")).toBe(false)
+    })
+
+    test("Should return false is device name contains special chars", () => {
+        expect(validateDeviceName("Phone -")).toBe(false)
+        expect(validateDeviceName("Phone _")).toBe(false)
+        expect(validateDeviceName("Phone !")).toBe(false)
+        expect(validateDeviceName("Phone @")).toBe(false)
+        expect(validateDeviceName("Phone $")).toBe(false)
+    })
+})
+
 describe("Password validator", () => {
     test("Should return true for a valid password", () => {
         expect(validatePassword("Password_1")).toBe(true)
