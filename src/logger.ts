@@ -8,7 +8,7 @@ const logFormat = printf(({level, message, timestamp}) => {
 
 //don't log debug in prod to avoid leaking user data :)
 //we default to running in prod if unspecified to prevent forgeting to set the environment
-const runningInProd =  (process.env.ENVIRONMENT !== "dev")  
+const runningInProd =  (process.env.NODE_ENV !== "dev")  
 let logLevel = process.env.LOG_LEVEL
 if(!logLevel) logLevel = "info"
 if(logLevel === "debug" && runningInProd) logLevel = "verbose"

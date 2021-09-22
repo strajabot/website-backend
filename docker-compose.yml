@@ -31,6 +31,7 @@ services:
       - "9229:9229"
     restart: unless-stopped
     environment: 
+      - NODE_ENV=${NODE_ENV}
       - SSH_PRIVATE_KEY=${SSH_PRIVATE_KEY}
       - SESSION_SECRET=${SESSION_SECRET}
       - EXPRESS_PORT=80
@@ -41,6 +42,7 @@ services:
       - POSTGRES_PORT=5432
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - LOG_LEVEL=${LOG_LEVEL}
     networks:
       - internal
 networks: 
