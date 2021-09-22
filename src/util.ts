@@ -25,8 +25,8 @@ export function validateUsername(username: string): boolean {
     return new RegExp(/^[a-zA-Z0-9_]{3,31}$/).test(username)
 }
 
-export function validateDeviceName(username: string): boolean {
-    return new RegExp(/^[a-zA-Z0-9]{3,15}$/).test(username)
+export function validateDeviceName(deviceName: string): boolean {
+    return new RegExp(/^[a-zA-Z0-9 ]{3,15}$/).test(deviceName)
 }
 
 /**
