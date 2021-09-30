@@ -35,9 +35,11 @@
     "ts-jest": "^27.0.5"
   },
   "scripts": {
-    "compile": "tsc",
-    "create_migrations": "typeorm migration:create",
-    "test": "jest",
+    "compile": "tsc -p .",
+    "createMigrations": "typeorm migration:create",
+    "syncSchema": "typeorm schema:sync",
+    "dev": "docker-compose down; export NODE_FLAGS=--enable-source-maps; docker-compose up --build",
+    "devDebug":"docker-compose down; export NODE_FLAGS=--enable-source-maps\\ --inspect-brk=0.0.0.0:9229 ; docker-compose up --build",
     "start": "node ."
   }
 }
