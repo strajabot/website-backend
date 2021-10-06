@@ -261,8 +261,6 @@ router.post("/:username/email/confirm", async (req, res) => {
 
 })
 
-
-
 router.delete("/:username", async (req, res) => {
     const username = req.params.username
     if(!validateUsername(username)) return resBadData()
