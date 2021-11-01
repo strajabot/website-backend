@@ -25,6 +25,16 @@ export function validateUsername(username: string): boolean {
     return new RegExp(/^[a-zA-Z0-9_]{3,31}$/).test(username)
 }
 
+/**
+ * -Device name can consist of the whole English Alphabet
+ * -Device name can consist of all digits
+ * -Device name can contain whitespace
+ * -Device name mustn't contain special characters
+ * -Device name mustn't be shorter than 3 characters
+ * -Device name mustn't be longer than 15 characters
+ * @param deviceName Device name to validate
+ * @returns true if device name is valid
+ */
 export function validateDeviceName(deviceName: string): boolean {
     return new RegExp(/^[a-zA-Z0-9 ]{3,15}$/).test(deviceName)
 }
