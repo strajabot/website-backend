@@ -40,6 +40,17 @@ export function validateDeviceName(deviceName: string): boolean {
 }
 
 /**
+ * -Email confirmation code can consist of the uppercase English Alphabet
+ * -Email confiramtion code can consist of all digits
+ * -Email confirmation code must be exactly 8 characters long
+ * @param code 
+ * @returns 
+ */
+export function validateEmailConfirmCode(code: string): boolean {
+    return new RegExp(/^[A-Z0-9]{8}$/).test(code)
+}
+
+/**
  * -Password has at least one digit
  * -Password has at least one lowercase character
  * -Password has at least one uppercase character 

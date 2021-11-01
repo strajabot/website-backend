@@ -6,7 +6,7 @@ import { createDevice } from "../../../logic/device"
 import { changeEmail, confirmEmail } from "../../../logic/email"
 import { changePassword } from "../../../logic/password"
 import { BadRegistrationData, deleteUser, EmailAlreadyInUse, isRegistrationData, registerUser, UserAlreadyExists, UserNotExist } from "../../../logic/user"
-import { validateDeviceName, validateEmail, validatePassword, validateUsername } from "../../../util"
+import { validateDeviceName, validateEmail, validateEmailConfirmCode, validatePassword, validateUsername } from "../../../util"
 
 const router = Router()
 
@@ -210,7 +210,7 @@ router.post("/:username/email/change", async (req, res) => {
 router.post("/:username/email/confirm", async (req, res) => {
     const username = req.params.username
     const code = req.body.confirmCode
-    //todo: add confirm code validation
+    if(!validateEmailConfirmCode(code)) return resBadData()
     if(!validateUsername(username)) return resBadData()
     if(!isAuthorized(username, req, res)) return
     let success: boolean
