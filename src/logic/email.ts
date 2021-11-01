@@ -11,7 +11,13 @@ import { safeCompare } from "../util";
  * @returns confirmation code
  */
  export function genEmailConfirmCode(): string {
-    return uuid().slice(0, 8)
+    const dict = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+    let code: string = ""
+    for(let i=0;i<8;i++) {
+        const k = Math.floor(Math.random() * dict.length)
+        code += dict.charAt(k)
+    }
+    return code
 }
 
 
